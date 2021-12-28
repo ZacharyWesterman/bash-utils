@@ -4,10 +4,10 @@ if [ -z "$1" ] || [ -z "$2" ]
 then
 	echo 'Decrypt and uncompress a given file to an output directory.'
 	echo
-	echo 'Usage: tarencrypt {source} {dest}'
+	echo 'Usage: tardecrypt {source} {dest}'
 	echo
-	echo 'Example: tarencrypt output_archive.tar.gz.gpg /home/me'
-	echo 'Will put all the CONTENTS of "output_archive.tar.gz.gpg" directly into /home/me.'
+	echo 'Example: tardecrypt output_archive.tar.gz.gpg /home/me'
+	echo 'Will put all the CONTENTS of "output_archive.tar.gz" directly into /home/me.'
 	exit 0
 fi
 
