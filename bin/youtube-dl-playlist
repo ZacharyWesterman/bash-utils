@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+[ "$1" == '' ] && echo 'Playlist URL required' && exit 1
+
+youtube-dl --get-id "$1" | xargs -I '{}' -P 5 youtube-dl 'https://youtube.com/watch?v={}'
