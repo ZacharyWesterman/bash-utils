@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+if [ -z "$1" ] || [ -z "$2" ]
+then
+	echo 'Compress and encrypt a given file or directory.'
+	echo
+	echo 'Usage: tarencrypt {source} {dest}'
+	echo
+	echo 'Example: tarencrypt /home/me/big_folder output_archive'
+	echo 'Will result in "output_archive.tar.gz.gpg" in your working dir.'
+	exit 0
+fi
+
+tar czvpf - "$1" | gpg --symmetric --cipher-algo aes256 -o "$2".tar.gz
