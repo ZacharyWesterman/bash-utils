@@ -2,13 +2,13 @@
 
 if [ -z "$1" ] || [ -z "$2" ]
 then
-	echo 'Compress and encrypt a given file or directory.'
+	echo 'Pack and encrypt a given file or directory.'
 	echo
 	echo 'Usage: tarencrypt {source} {dest}'
 	echo
 	echo 'Example: tarencrypt /home/me/big_folder output_archive'
-	echo 'Will result in an encrypted "output_archive.tar.gz" in your working dir.'
+	echo 'Will result in an encrypted "output_archive.tar.gpg" in your working dir.'
 	exit 0
 fi
 
-tar czvpf - "$1" | gpg --symmetric --cipher-algo aes256 -o "$2".tar.gz
+tar cf - "$1" -P | pv -s $(du -sb "$1" | awk '{print $1}') | gpg -z 0 --symmetric --cipher-algo aes256 -o "$2".tar.gpg

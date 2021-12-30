@@ -2,12 +2,12 @@
 
 if [ -z "$1" ] || [ -z "$2" ]
 then
-	echo 'Decrypt and uncompress a given file to an output directory.'
+	echo 'Decrypt and unpack a given file to an output directory.'
 	echo
 	echo 'Usage: tardecrypt {source} {dest}'
 	echo
-	echo 'Example: tardecrypt output_archive.tar.gz.gpg /home/me'
-	echo 'Will put all the CONTENTS of "output_archive.tar.gz" directly into /home/me.'
+	echo 'Example: tardecrypt output_archive.tar.gpg /home/me'
+	echo 'Will put all the CONTENTS of "output_archive.tar.gpg" directly into /home/me.'
 	exit 0
 fi
 
@@ -17,4 +17,4 @@ fi
 [ ! -f "$1" ] && echo "Error: source $1 is not a regular file." && exit 1
 [ ! -d "$2" ] && echo "Error: dest $2 is not a directory." && exit 1
 
-gpg -d "$1" | tar xzvf - -C "$2"
+pv "$1" | gpg -z 0 -d - | tar xf - -C "$2"
