@@ -11,4 +11,4 @@ then
 	exit 0
 fi
 
-tar cf - "$1" -P | pv -s $(du -sb "$1" | awk '{print $1}') | gpg -z 0 --symmetric --cipher-algo aes256 -o "$2".tar.gpg
+tar cf - -C "$(dirname "$1")" "$(basename "$1")" -P | pv -s $(du -sb "$1" | awk '{print $1}') | gpg -z 0 --symmetric --cipher-algo aes256 -o "$2".tar.gpg
