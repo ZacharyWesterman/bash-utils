@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-[ "$1" == '' ] && echo 'Playlist URL required' && exit 1
-
-yt-dlp --download-archive downloaded.txt --get-id "$1" | xargs -I '{}' -P 128 yt-dlp --download-archive downloaded.txt -ciw -o '%(title)s-%(id)s.%(ext)s' 'https://youtube.com/watch?v={}'
-# yt-dlp --download-archive downloaded.txt -ciw -o '%(title)s-%(id)s.%(ext)s' "$1"

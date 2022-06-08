@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+ASYNC=0
+MAX_THREADS=128
+
+RUNDIR="$HOME/Videos/youtube-dl"
+URLLIST="$RUNDIR/url_list.txt"
+CACHEDIR="$RUNDIR/.cache"
+
+[ "$1" == '--async' ] && ASYNC=1
+
+[ -e "$RUNDIR" ] || mkdir "$RUNDIR" || exit 1
+[ -e "$CACHEDIR" ] || mkdir "$CACHEDIR" || exit 1
+
+if [ ! -e "$URLLIST" ]
+then
+	echo "No URL list found at $URLLIST, exiting."
+	exit 1
+fi
+
+while read dir url
+do
+	cd "$RUNDIR" || exit 1
+
+	echo "$dir"
+	[ -e "$dir" ] || mkdir "$dir"
+	cd "$dir" || continue
+
+	cachetxt="$CACHEDIR/$dir.txt"
+	{
+		if [ "$ASYNC" == 1 ]
+		then
+			yt-dlp --download-archive "$cachetxt" --get-id "$url" | xargs -I '{}' -P "$MAX_THREADS" yt-dlp --download-archive "$cachetxt" -ciw -o '%(title)s-%(id)s.%(ext)s' 'https://youtube.com/watch?v={}'
+		else
+			yt-dlp --download-archive "$cachetxt" -ciw -o '%(title)s-%(id)s.%(ext)s' "$url"
+		fi
+	} </dev/null || exit 1
+done < "$URLLIST"
