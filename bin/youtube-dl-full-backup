@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ASYNC=0
-MAX_THREADS=128
+MAX_THREADS=$(nproc)
 
 RUNDIR="$HOME/Videos/youtube-dl"
 URLLIST="$RUNDIR/url_list.txt"
