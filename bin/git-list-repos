@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+import sys, json, requests
+
+if len(sys.argv) < 2 or sys.argv == '':
+	print('ERROR: No GitHub user specified.')
+	exit(1)
+
+URL = f'https://api.github.com/users/{sys.argv[1]}/repos'
+response = requests.get(URL)
+
+if response.status_code != 200:
+	print(f'ERROR: Response code {status_code}.')
+	exit(1)
+
+data = json.loads(response.text)
+output = [ i['name'] for i in data ]
+print('\n'.join(output))
