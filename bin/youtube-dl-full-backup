@@ -30,9 +30,9 @@ do
 	{
 		if [ "$ASYNC" == 1 ]
 		then
-			yt-dlp --download-archive "$cachetxt" --get-id "$url" | xargs -I '{}' -P "$MAX_THREADS" yt-dlp --download-archive "$cachetxt" -ciw -o '%(title)s-%(id)s.%(ext)s' 'https://youtube.com/watch?v={}'
+			yt-dlp --download-archive "$cachetxt" --get-id "$url" 2>/dev/null | xargs -I '{}' -P "$MAX_THREADS" yt-dlp --downloader aria2c --download-archive "$cachetxt" -ciw -o '%(title)s-%(id)s.%(ext)s' 'https://youtube.com/watch?v={}'
 		else
-			yt-dlp --download-archive "$cachetxt" -ciw -o '%(title)s-%(id)s.%(ext)s' "$url"
+			yt-dlp --downloader aria2c --download-archive "$cachetxt" -ciw -o '%(title)s-%(id)s.%(ext)s' "$url"
 		fi
 	} </dev/null || exit 1
 done < "$URLLIST"
