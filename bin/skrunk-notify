@@ -43,7 +43,8 @@ if args.write_config:
     config = {
         'skrunk': args.skrunk,
         'api_key': args.api_key,
-        'category': args.category
+        'category': args.category,
+        'title': args.title,
     }
     with open(CONFIG_PATH, 'w') as f:
         json.dump(config, f)
