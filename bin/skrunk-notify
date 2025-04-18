@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+# Easily send notifications to a Skrunk user
+
+import requests
+import argparse
+import json
+if __name__ != '__main__':
+    raise ImportError("This script is not meant to be imported")
+
+# Read default configuration if it exists
+import os
+CONFIG_PATH = os.environ['HOME'] + '/.config/skrunk_config.json'
+config = {}
+try:
+    with open(CONFIG_PATH, 'r') as f:
+        config = json.load(f)
+except FileNotFoundError:
+    pass
+
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(
+    description='Send a notification to a Skrunk user'
+)
+parser.add_argument('username', type=str,
+                    help='The username of the user to notify')
+parser.add_argument('message', type=str, help='The message to send')
+parser.add_argument('--title', '-t', type=str, default=config.get('title', 'Notification'),
+                    help='The title of the notification')
+parser.add_argument('--category', '-c', type=str, default=config.get('category', 'general'),
+                    help='The category of the notification')
+parser.add_argument('--skrunk', '-s', type=str, default=config.get('skrunk', ''),
+                    help='The Skrunk server to use')
+parser.add_argument('--api-key', '-a', type=str,
+                    default=config.get('api_key', ''), help='The API key to use')
+parser.add_argument('--write-config', '-w', action='store_true',
+                    help='Write the chosen configuration to this machine and exit')
+
+args = parser.parse_args()
+
+# Write the configuration to a file
+if args.write_config:
+    config = {
+        'skrunk': args.skrunk,
+        'api_key': args.api_key,
+        'category': args.category
+    }
+    with open(CONFIG_PATH, 'w') as f:
+        json.dump(config, f)
+    print("Configuration file written successfully.")
+    exit(0)
+
+if args.skrunk == '':
+    print("Server address not specified. Please provide a Skrunk server in the default config or using the --skrunk option.")
+    exit(1)
+if args.api_key == '':
+    print("API key not specified. Please provide an API key in the default config or using the --api-key option.")
+    exit(1)
+if args.username == '':
+    print("Username not specified. Please provide a username.")
+    exit(1)
+if args.message == '':
+    print("Message not specified. Please provide a message.")
+    exit(1)
+if args.category == '':
+    print("Category not specified. Please provide a category.")
+    exit(1)
+
+
+# Send the notification
+res = requests.post(
+    f'{args.skrunk}/api',
+    json={
+        'query': """mutation ($username: String!, $title: String!, $body: String!, $category: String) {
+            sendNotification (username: $username, title: $title, body: $body, category: $category) {
+                __typename
+                ...on MissingConfig { message }
+                ...on UserDoesNotExistError { message }
+                ...on WebPushException { message }
+                ...on InvalidSubscriptionToken { message }
+                ...on BadNotification { message }
+                ...on InsufficientPerms { message }
+            }
+        }""",
+        'variables': {
+            'username': args.username,
+            'title': args.title,
+            'body': args.message,
+            'category': args.category
+        },
+    },
+    headers={
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {args.api_key}',
+    },
+)
+
+if res.status_code == 500:
+    print(f"Error: {res.json().get('errors')[0].get('message')}")
+    exit(1)
+if res.status_code >= 300 or res.status_code < 200:
+    print(f"Error: {res.status_code} {res.text}")
+    exit(1)
+
+result = res.json()['data']['sendNotification']
+if result['__typename'] != 'Notification':
+    print(f"Error: {result['message']}")
+    exit(1)
+
+exit(0)
