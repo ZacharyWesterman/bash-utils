@@ -58,9 +58,9 @@ print_services() {
 if [ -z "$1" ] || [ "$1" == -h ] || [ "$1" == "--help" ]; then
     echo "This script scans local network for devices with a specific open port."
     echo
-    echo "Usage: $0 <service-name|port-number>"
-    echo "Example: \`$0 ssh\`"
-    echo "Example: \`$0 22\`"
+    echo "Usage: $(basename "$0") <service-name|port-number>"
+    echo "Example: \`$(basename "$0") ssh\`"
+    echo "Example: \`$(basename "$0") 22\`"
     echo
     print_services
     [ -z "$1" ] && exit 1
