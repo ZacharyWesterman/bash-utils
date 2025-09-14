@@ -29,7 +29,7 @@ print_services() {
     echo "Accepted service names:"
 
     # 1. Get the keys sorted
-    keys=($(printf "%s\n" "${!port_names[@]}" | sort))
+    mapfile -t keys < <(printf "%s\n" "${!port_names[@]}" | sort)
 
     # 2. Find longest key (for column width)
     maxlen=0
