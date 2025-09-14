@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+declare -A port_names=(
+    ["ssh"]="22"
+    ["http"]="80"
+    ["https"]="443"
+    ["ftp"]="21"
+    ["sftp"]="22"
+    ["smtp"]="25"
+    ["dns"]="53"
+    ["rdp"]="3389"
+    ["mysql"]="3306"
+    ["postgresql"]="5432"
+    ["mongodb"]="27017"
+    ["mongo"]="27017"
+    ["samba"]="445,139"
+    ["smb"]="445,139"
+    ["telnet"]="23"
+    ["pop3"]="110"
+    ["imap"]="143"
+    ["ldap"]="389"
+    ["nfs"]="2049"
+    ["snmp"]="161"
+    ["vnc"]="5900"
+    ["redis"]="6379"
+)
+
+print_services() {
+    echo "Accepted service names:"
+
+    # 1. Get the keys sorted
+    keys=($(printf "%s\n" "${!port_names[@]}" | sort))
+
+    # 2. Find longest key (for column width)
+    maxlen=0
+    for k in "${keys[@]}"; do
+        (( ${#k} > maxlen )) && maxlen=${#k}
+    done
+    ((maxlen+=2)) # add some padding
+
+    # 3. Get terminal width
+    termwidth=$(tput cols)
+
+    # 4. Compute how many columns fit
+    cols=$(( termwidth / maxlen ))
+    (( cols < 1 )) && cols=1
+
+    # 5. Print in table form
+    for ((i=0; i<${#keys[@]}; i++)); do
+        printf "%-*s" "$maxlen" "${keys[i]}"
+        (( (i+1) % cols == 0 )) && printf "\n"
+    done
+    # if the last row is not complete, add a newline
+    (( ${#keys[@]} % cols != 0 )) && printf "\n"
+}
+
+
+if [ -z "$1" ] || [ "$1" == -h ] || [ "$1" == "--help" ]; then
+    echo "This script scans local network for devices with a specific open port."
+    echo
+    echo "Usage: $0 <service-name|port-number>"
+    echo "Example: \`$0 ssh\`"
+    echo "Example: \`$0 22\`"
+    echo
+    print_services
+    [ -z "$1" ] && exit 1
+    exit 0
+fi
+
+# Get the gateway IP address
+gateway_ip=$(ip route | grep default | awk '{print $3}')
+
+ports=${port_names[$1]}
+if [ -z "$ports" ]; then
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+        ports=$1
+    else
+        echo >&2 "Unknown service name: $1"
+        print_services >&2
+        exit 1
+    fi
+fi
+
+echo -e "Scanning network ${gateway_ip%.*}.0/24 for open port: $ports"
+sudo nmap --open -p "$ports" "${gateway_ip%.*}.0/24" | awk '
+    function out() { if (state=="up") { printf "%s\t%s\t%s\n",ip,mac,name; ip=""; mac=""; name=""; state="" } }
+
+    /Nmap scan report/ { out(); name=$5; ip = substr($6,2,length($6)-2); if (ip=="") { ip=name; name="" } }
+    /Host is/ { state=$3 }
+    /MAC Address/ { mac=$3 }
+
+    END { out() }
+'
