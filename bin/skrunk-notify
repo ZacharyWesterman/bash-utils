@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 # Easily send notifications to a Skrunk user
 
-import requests
 import argparse
 import json
+import os
+import requests
+
 if __name__ != '__main__':
     raise ImportError("This script is not meant to be imported")
 
 # Read default configuration if it exists
-import os
 CONFIG_PATH = os.environ['HOME'] + '/.config/skrunk_config.json'
 config = {}
 try:
-    with open(CONFIG_PATH, 'r') as f:
+    with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
         config = json.load(f)
 except FileNotFoundError:
     pass
@@ -46,16 +47,24 @@ if args.write_config:
         'category': args.category,
         'title': args.title,
     }
-    with open(CONFIG_PATH, 'w') as f:
+    with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
         json.dump(config, f)
     print("Configuration file written successfully.")
     exit(0)
 
 if args.skrunk == '':
-    print("Server address not specified. Please provide a Skrunk server in the default config or using the --skrunk option.")
+    print(
+        "Server address not specified. " +
+        "Please provide a Skrunk server in the default config" +
+        " or using the --skrunk option."
+    )
     exit(1)
 if args.api_key == '':
-    print("API key not specified. Please provide an API key in the default config or using the --api-key option.")
+    print(
+        "API key not specified. " +
+        "Please provide an API key in the default config" +
+        " or using the --api-key option."
+    )
     exit(1)
 if args.username == '':
     print("Username not specified. Please provide a username.")
@@ -72,17 +81,18 @@ if args.category == '':
 res = requests.post(
     f'{args.skrunk}/api',
     json={
-        'query': """mutation ($username: String!, $title: String!, $body: String!, $category: String) {
-            sendNotification (username: $username, title: $title, body: $body, category: $category) {
-                __typename
-                ...on MissingConfig { message }
-                ...on UserDoesNotExistError { message }
-                ...on WebPushException { message }
-                ...on InvalidSubscriptionToken { message }
-                ...on BadNotification { message }
-                ...on InsufficientPerms { message }
-            }
-        }""",
+        'query':
+        """mutation ($username: String!, $title: String!, $body: String!, $category: String) {
+sendNotification (username: $username, title: $title, body: $body, category: $category) {
+    __typename
+    ...on MissingConfig { message }
+    ...on UserDoesNotExistError { message }
+    ...on WebPushException { message }
+    ...on InvalidSubscriptionToken { message }
+    ...on BadNotification { message }
+    ...on InsufficientPerms { message }
+}
+}""",
         'variables': {
             'username': args.username,
             'title': args.title,
@@ -94,6 +104,7 @@ res = requests.post(
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {args.api_key}',
     },
+    timeout=20,
 )
 
 if res.status_code == 500:
