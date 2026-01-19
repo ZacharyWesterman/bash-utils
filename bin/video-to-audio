@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+if [ "$1" == '' ] || [ "$2" == '' ]; then
+    echo "Usage: \`video-to-audio <video-file> <output-file>\`"
+    exit 1
+fi
+
+if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+    echo "Convert a video file to audio format, retaining the thumbnail if available."
+    echo "Usage: \`video-to-audio <video-file> <output-file>\`"
+    exit 0
+fi
+
+# Check if ffmpeg and exiftool are installed
+if ! command -v ffmpeg &> /dev/null; then
+    echo "ffmpeg could not be found. Please install ffmpeg to use this script."
+    exit 1
+fi
+
+if ! command -v exiftool &> /dev/null; then
+    echo "exiftool could not be found. Please install exiftool to use this script."
+    exit 1
+fi
+
+echo "Converting video file $1 to audio file $2..."
+
+# Extract thumbnail from the first frame of the video
+temp_image_file="$(mktemp --suffix=.jpg)"
+ffmpeg -i "$1" -vf "select=eq(n\,0)" -q:v 3 "$temp_image_file" -y
+
+# Convert video to audio
+ffmpeg -i "$1" -i "$temp_image_file" -acodec libmp3lame -metadata title=video -b:a 256k -map_metadata 0 -map 0:1 -map 1 "$2" -y
+
+rm -f "$temp_image_file"
+
+# Check if video was created successfully
+if [ ! -f "$2" ]; then
+    echo "ERROR: Failed to create audio file $2"
+    exit 1
+fi
+
+echo "Done."

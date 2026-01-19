@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+cd ~/Music/Libation/Books || exit 1
+
+ct=0
+
+declare -A books
+for i in *; do
+    book_name="${i% [*}"
+    book_name="${book_name%% (Unabridged*}"
+    books["$book_name"]="$i"
+done
+
+# Get list of books that are already on the server
+while read -r remote_book_name; do
+    remote_book_name="${remote_book_name% (Unabridged*}"
+
+    [ -z "$remote_book_name" ] && continue
+    [ "${books[$remote_book_name]}" == '' ] && continue
+    # Don't want to upload duplicates
+    books["$remote_book_name"]=0
+done < <(ssh daedalus 'for i in /mnt/storage/data/airsonic/Audiobooks/*; do ls -1 "$i"; done')
+
+for book_name in "${!books[@]}"; do
+    [ "${books[$book_name]}" == 0 ] && continue
+
+    i="${books[$book_name]}"
+
+    [ ! -d "$i" ] && echo "ERROR: $i is not a directory." && continue
+
+    # Get the artist name using exiftool
+    artist_name=''
+    for k in "$i/"*; do
+        [ -e "$k" ] || continue
+        artist_name="$(exiftool -s -s -s -Artist "$k")"
+        break
+    done
+    if [ "$artist_name" == '' ]; then
+        echo "ERROR: Unable to determine Artist of file $i"
+        continue
+    fi
+
+    [ "${artist_name,,}" == 'eoin colfer' ] && continue
+    [ "${artist_name,,}" == 'brandon mull' ] && continue
+    [ "${artist_name,,}" == 'craig alanson' ] && continue
+    [ "${artist_name,,}" == 'dennis e. taylor' ] && continue
+    [ "${artist_name,,}" == 'edward e. robertson' ] && [ "${book_name,,}" == 'the 13th god' ] && continue
+    [ "${artist_name,,}" == 'edward e. robertson' ] && [ "${book_name,,}" == 'the sealed citadel' ] && continue
+    [ "${artist_name,,}" == 'edward e. robertson' ] && [ "${book_name,,}" == 'the twelve plagues' ] && continue
+    [ "${artist_name,,}" == 'erik larson' ] && continue
+    [ "${artist_name,,}" == 'jordan b. peterson, norman doidge md' ] && continue
+    [ "${artist_name,,}" == 'j.t. williams' ] && continue
+    [ "${artist_name,,}" == 'michael g. manning' ] && [ "${book_name,,}" == 'disciple of war' ] && continue
+    [ "${artist_name,,}" == 'michael g. manning' ] && [ "${book_name,,}" == 'the choice of magic' ] && continue
+    [ "${artist_name,,}" == 'michael g. manning' ] && [ "${book_name,,}" == 'scholar of magic' ] && continue
+    [ "${artist_name,,}" == 'malcolm gladwell' ] && continue
+    [ "${artist_name,,}" == 'michael j. sullivan' ] && [ "${book_name,,}" == 'age of swords [dramatized adaptation]' ] && continue
+    [ "${artist_name,,}" == 'michael j. sullivan' ] && [ "${book_name,,}" == 'age of swords' ] && continue
+    [ "${artist_name,,}" == 'neil gaiman' ] && continue
+    [ "${artist_name,,}" == 'raymond e. feist' ] && continue
+    [ "${artist_name,,}" == 'will wight' ] && continue
+    [ "${artist_name,,}" == 'joel shepherd' ] && continue
+    [ "${artist_name,,}" == 'jonathan renshaw' ] && continue
+
+    ct=$((ct + 1))
+    # echo "{$artist_name} $book_name"
+    echo "[$ct] $artist_name/$book_name"
+    rsync -a --info=progress2 --mkpath "$i"/ daedalus:/mnt/storage/data/airsonic/Audiobooks/"$artist_name"/"$book_name"/
+done
