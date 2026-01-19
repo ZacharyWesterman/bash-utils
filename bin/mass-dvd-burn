@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+if [ "$#" -lt 2 ]; then
+    echo >&2 "Usage: mass-dvd-burn <destination> <iso 1> [<iso 2> <etc...>]"
+    echo >&2
+    echo >&2 "This script burns a sequence of ISO files to DVDs,"
+    echo >&2 "waiting for a new DVD to be inserted before burning the next ISO."
+    echo >&2
+    echo >&2 "Example: \`mass-dvd-burn /dev/sr0 example1.iso example2.iso\`"
+    exit 1
+fi
+
+DEST="$1"
+shift 1
+
+await_dvd() {
+    while :; do
+        err=$(dd if="$DEST" of=/dev/null bs=2048 status=none count=1 2>&1)
+        case $err in
+            "dd: failed to open '$DEST': No medium found")
+            sleep 1 ;;
+            '')
+                # successfully opened
+            break ;;
+            *)
+                # unexpected error
+                # play some SOUND in the speakers
+                # and wait for user input to continue
+            read -r _wtf ;;
+        esac
+    done
+}
+
+for i in "$@"; do
+    echo -e "\033[32m$i\033[0m"
+    echo "Please insert a DVD, then burning will happen automatically."
+    await_dvd
+    growisofs -Z "$DEST"="$i"
+    echo "Finished burning."
+    echo
+done

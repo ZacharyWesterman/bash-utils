@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-cp bin/* ~/.local/bin/
+for i in bin/*; do
+    cp "$i" ~/.local/"$i"
+done
