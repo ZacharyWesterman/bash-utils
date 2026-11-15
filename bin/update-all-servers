@@ -14,13 +14,13 @@ tmux split-window -v
 
 # Run commands on respective panes
 tmux select-pane -t 3
-tmux send-keys -t 3 "ssh -t daedalus '$cmd'" Enter
+tmux send-keys -t 3 "ssh -t daedalus '$cmd' && exit" Enter
 tmux select-pane -t 0
-tmux send-keys -t 0 "ssh -t tartarus '$cmd'" Enter
+tmux send-keys -t 0 "ssh -t tartarus '$cmd' && exit" Enter
 tmux select-pane -t 1
-tmux send-keys -t 1 "ssh -t hugen '$cmd'" Enter
+tmux send-keys -t 1 "ssh -t hugen '$cmd' && exit" Enter
 tmux select-pane -t 2
-tmux send-keys -t 2 "ssh -t munen '$cmd'" Enter
+tmux send-keys -t 2 "ssh -t munen '$cmd' && exit" Enter
 
 # Synchronize panes so user can input sudoers password
 tmux setw synchronize-panes on
